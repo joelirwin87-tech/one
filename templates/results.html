@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Backtest Results</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
+      integrity="sha512-NhSC1YmyruXifcj/KFRWoC561Y9GZsDufF3NzSDmz3IoLGj8r3J9FQhXQDwK5ec6KZ12eDqB3h3w8bGZl+Yv7Q=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <style>
+      body {
+        font-family: "Helvetica Neue", Arial, sans-serif;
+        background: #f8f9fb;
+        color: #1b1f24;
+        margin: 0;
+        padding: 0;
+      }
+
+      header {
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        color: #ffffff;
+        padding: 2rem 1.5rem;
+        text-align: center;
+      }
+
+      main {
+        max-width: 1080px;
+        margin: -2.5rem auto 3rem;
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 15px 40px rgba(15, 23, 42, 0.12);
+        padding: 2.5rem;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin-top: 0;
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+      }
+
+      .metric-card {
+        background: #f1f4fb;
+        border-radius: 12px;
+        padding: 1.25rem;
+        box-shadow: inset 0 0 0 1px rgba(42, 82, 152, 0.08);
+      }
+
+      .metric-card span.label {
+        font-size: 0.85rem;
+        color: #64748b;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .metric-card span.value {
+        display: block;
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin-top: 0.25rem;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1.5rem;
+        font-size: 0.9rem;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 0.75rem 0.85rem;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      th {
+        background: #f8fafc;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        color: #475569;
+      }
+
+      tbody tr:nth-child(even) {
+        background: #f8fafc;
+      }
+
+      .actions {
+        margin-top: 2.5rem;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+
+      a.button {
+        background: #2a5298;
+        color: #ffffff;
+        text-decoration: none;
+        padding: 0.8rem 1.6rem;
+        border-radius: 999px;
+        font-weight: 600;
+        transition: background 0.2s ease, transform 0.2s ease;
+      }
+
+      a.button:hover {
+        background: #24477f;
+        transform: translateY(-1px);
+      }
+
+      .trade-log {
+        margin-top: 2rem;
+      }
+
+      .trade-log ul {
+        list-style: none;
+        padding-left: 0;
+      }
+
+      .trade-log li {
+        padding: 0.6rem 0.85rem;
+        margin-bottom: 0.5rem;
+        background: #f1f5f9;
+        border-radius: 10px;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Backtest Results</h1>
+      <p>Golden cross ({{ short_window }} / {{ long_window }}) with {{ cost.type }} trade cost.</p>
+    </header>
+    <main>
+      <section class="metrics">
+        <div class="metric-card">
+          <span class="label">Strategy Return</span>
+          <span class="value">{{ '{:.2%}'.format(summary.final_strategy_return) }}</span>
+        </div>
+        <div class="metric-card">
+          <span class="label">Buy &amp; Hold Return</span>
+          <span class="value">{{ '{:.2%}'.format(summary.final_market_return) }}</span>
+        </div>
+        <div class="metric-card">
+          <span class="label">Trades Executed</span>
+          <span class="value">{{ summary.total_trades }}</span>
+        </div>
+        <div class="metric-card">
+          <span class="label">Trade Cost</span>
+          {% if cost.type == 'percent' %}
+          <span class="value">{{ cost.value }}%</span>
+          {% else %}
+          <span class="value">${{ '%.4f'|format(cost.value) }}</span>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="trade-log">
+        <h2>Trade Log</h2>
+        {% if summary.trades %}
+        <ul>
+          {% for trade in summary.trades %}
+          <li>
+            <span><strong>{{ trade.signal }}</strong> on {{ trade.date.strftime('%Y-%m-%d') }}</span>
+            <span>Price: ${{ '%.2f'|format(trade.price) }}</span>
+            <span>Cost applied: {{ trade.cost_applied_pct }}%</span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p>No trades were generated for the selected parameters.</p>
+        {% endif %}
+      </section>
+
+      <section class="data-table">
+        <h2>Equity Curve</h2>
+        <div style="overflow-x: auto">
+          <table aria-label="Equity curve table">
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Close</th>
+                <th scope="col">Short MA</th>
+                <th scope="col">Long MA</th>
+                <th scope="col">Signal</th>
+                <th scope="col">Position</th>
+                <th scope="col">Strategy Return</th>
+                <th scope="col">Cumulative Strategy Return</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in summary.results.itertuples() %}
+              <tr>
+                <td>{{ row.Date.strftime('%Y-%m-%d') }}</td>
+                <td>${{ '%.2f'|format(row.Close) }}</td>
+                <td>${{ '%.2f'|format(row.Short_MA) }}</td>
+                <td>${{ '%.2f'|format(row.Long_MA) }}</td>
+                <td>{{ row.Signal }}</td>
+                <td>{{ '%.0f'|format(row.Position) }}</td>
+                <td>{{ '{:.4%}'.format(row.Strategy_Returns) }}</td>
+                <td>{{ '{:.4%}'.format(row.Cumulative_Strategy_Return) }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="actions">
+        <a class="button" href="{{ url_for('index') }}">Backtest another dataset</a>
+      </div>
+    </main>
+  </body>
+</html>
